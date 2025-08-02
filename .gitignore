@@ -15,3 +15,5 @@
 !/elisp/themes/rose-pine-theme.el
 !/elisp/themes/rose-pine-dawn-theme.el
 !/elisp/themes/rose-pine-moon-theme.el
+!/elisp/mono-modeline/
+!/elisp/mono-modeline/mono-modeline.el
