@@ -1,0 +1,17 @@
+*
+!.gitignore
+!init.el
+!/elisp/
+!/elisp/general.el
+!/elisp/pkg.el
+!/elisp/utilities.el
+!/elisp/org-mode.el
+!/elisp/agenda.el
+!/elisp/terminal.el
+!/elisp/file-manager.el
+!/elisp/ui.el
+!/elisp/typography.el
+!/elisp/themes/
+!/elisp/themes/rose-pine-theme.el
+!/elisp/themes/rose-pine-dawn-theme.el
+!/elisp/themes/rose-pine-moon-theme.el
