@@ -60,7 +60,8 @@
 	  dap-mode
 	  tree-sitter
 	  tree-sitter-langs
-	  catppuccin-theme))
+	  catppuccin-theme
+	  magit))
 
 (dolist (pkg package-list)
   (straight-use-package pkg))
