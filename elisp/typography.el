@@ -1,8 +1,12 @@
 ;; Fonts
+(setq font-height (let ((env-font-height (getenv "EMACS_FONT_HEIGHT")))
+		    (if env-font-height
+			(string-to-number env-font-height) 140)))
+
 (set-face-attribute 'default nil
                     :family "Iosevka NF"
                     :weight 'light
-                    :height 130)
+                    :height font-height)
 
 (set-face-attribute 'bold nil
                     :family "Iosevka NF"
@@ -17,8 +21,7 @@
                   (font-spec :name "Inconsolata") nil)
 
 (set-fontset-font t '(#xe000 . #xffdd)
-                  (font-spec :name "Iosevka NF"
-                             :size 14) nil)
+                  (font-spec :name "Iosevka NF") nil)
 
 ;; Font locks
 (set-face-attribute 'font-lock-keyword-face nil
@@ -46,11 +49,11 @@
 		    :weight 'regular)
 
 (set-face-attribute 'font-lock-string-face nil
-		    ;;:family "Iosevka SS05"
+		    :family "Iosevka SS05"
 		    :weight 'light)
 
 (set-face-attribute 'font-lock-doc-face nil
-		    ;;:family "Iosevka SS05"
+		    :family "Iosevka SS05"
 		    :weight 'light
 		    :slant 'italic)
 
@@ -103,18 +106,20 @@
 
 ;; Ligatures
 (require 'ligature)
-(ligature-set-ligatures 'prog-mode
-			'("|||>" "<|||" "<==>" "<!--" "####" "~~>" "***" "||=" "||>"
-                          ":::" "::=" "=:=" "===" "==>" "=!=" "=>>" "=<<" "=/=" "!=="
-                          "!!." ">=>" ">>=" ">>>" ">>-" ">->" "->>" "-->" "---" "-<<"
-                          "<~~" "<~>" "<*>" "<||" "<|>" "<$>" "<==" "<=>" "<=<" "<->"
-                          "<--" "<-<" "<<=" "<<-" "<<<" "<+>" "</>" "###" "#_(" "..<"
-                          "..." "+++" "/==" "///" "_|_" "www" "&&" "^=" "~~" "~@" "~="
-                          "~>" "~-" "**" "*>" "*/" "||" "|}" "|]" "|=" "|>" "|-" "{|"
-                          "[|" "]#" "::" ":=" ":>" ":<" "$>" "==" "=>" "!=" "!!" ">:"
-                          ">=" ">>" ">-" "-~" "-|" "->" "--" "-<" "<~" "<*" "<|" "<:"
-                          "<$" "<=" "<>" "<-" "<<" "<+" "</" "#{" "#[" "#:" "#=" "#!"
-                          "##" "#(" "#?" "#_" "%%" ".=" ".-" ".." ".?" "+>" "++" "?:"
-                          "?=" "?." "??" ";;" "/*" "/=" "/>" "//" "__" "~~" "(*" "*)"
-                          "\\\\" "://"))
+(ligature-set-ligatures
+ 'prog-mode
+ '("|||>" "<|||" "<==>" "<!--" "####" "~~>" "***" "||=" "||>"
+   ":::" "::=" "=:=" "===" "==>" "=!=" "=>>" "=<<" "=/=" "!=="
+   "!!." ">=>" ">>=" ">>>" ">>-" ">->" "->>" "-->" "---" "-<<"
+   "<~~" "<~>" "<*>" "<||" "<|>" "<$>" "<==" "<=>" "<=<" "<->"
+   "<--" "<-<" "<<=" "<<-" "<<<" "<+>" "</>" "###" "#_(" "..<"
+   "..." "+++" "/==" "///" "_|_" "www" "&&" "^=" "~~" "~@" "~="
+   "~>" "~-" "**" "*>" "*/" "||" "|}" "|]" "|=" "|>" "|-" "{|"
+   "[|" "]#" "::" ":=" ":>" ":<" "$>" "==" "=>" "!=" "!!" ">:"
+   ">=" ">>" ">-" "-~" "-|" "->" "--" "-<" "<~" "<*" "<|" "<:"
+   "<$" "<=" "<>" "<-" "<<" "<+" "</" "#{" "#[" "#:" "#=" "#!"
+   "##" "#(" "#?" "#_" "%%" ".=" ".-" ".." ".?" "+>" "++" "?:"
+   "?=" "?." "??" ";;" "/*" "/=" "/>" "//" "__" "~~" "(*" "*)"
+   "\\\\" "://"))
+
 (add-hook 'prog-mode-hook #'ligature-mode)
