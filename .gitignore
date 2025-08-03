@@ -5,6 +5,7 @@
 !/elisp/general.el
 !/elisp/pkg.el
 !/elisp/utilities.el
+!/elisp/completion.el
 !/elisp/org-mode.el
 !/elisp/agenda.el
 !/elisp/terminal.el
