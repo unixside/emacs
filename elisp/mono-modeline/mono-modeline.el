@@ -242,8 +242,12 @@
 (defun mono-modeline-enable ()
   (mono-modeline-setup-faces)
   (setq-default header-line-format
-	      '(:eval (mono-modeline-format (current-buffer))))
-  (add-hook 'post-command-hook #'mono-modeline-update-selected-window))
+		'(:eval
+		  (cond ((derived-mode-p 'org-agenda-mode)
+			  (mono-modeline-format
+			   (current-buffer) "󰄵 " (upcase org-agenda-name)
+			   (format-time-string "%A %d, %B %Y  ")))
+			 (t (mono-modeline-format (current-buffer)))))))
 
 ;;;###autoload
 (define-minor-mode mono-modeline-mode
@@ -251,8 +255,10 @@
   :global t
   :init-value nil
   (if mono-modeline-mode
-      (mono-modeline-enable)
-    (setq-default header-line-format nil)
-    (remove-hook 'post-command-hook #'mono-modeline-update-selected-window)))
+      (progn
+	(mono-modeline-enable)
+	(add-hook 'post-command-hook #'mono-modeline-update-selected-window))
+    (remove-hook 'post-command-hook #'mono-modeline-update-selected-window)
+    (setq-default header-line-format nil)))
 
 (provide 'mono-modeline)

@@ -94,14 +94,3 @@
       )
 
 (global-set-key (kbd "C-c c") #'org-capture)
-
-(defun my/agenda-header-line ()
-  (setq-local header-line-format
-	      '(:eval (mono-modeline-format (current-buffer)
-					    "󰄵 "
-					    (upcase org-agenda-name)
-					    (format-time-string "%A %d, %B %Y  ")))))
-
-(with-eval-after-load 'mono-modeline
-  (add-hook 'org-agenda-mode-hook #'my/agenda-header-line))
-
