@@ -214,7 +214,7 @@
 	 (icon   (or icon (mono-modeline-get-icon buffer)))
 	 (name   (or name (mono-modeline-get-buffer-name buffer)))
 	 (right-text (or right-text (format-mode-line "%l:%c"))) 
-	 (reserve-area  (+ (length right-text) 2))
+	 (reserve-area  (+ (* (length right-text) mono-modeline-name-height) 2))
 	 (icon-face (if active
 			(mono-modeline-get-icon-face buffer)
 		      'mono-modeline-icon-i-face))
@@ -246,7 +246,7 @@
 		  (cond ((derived-mode-p 'org-agenda-mode)
 			  (mono-modeline-format
 			   (current-buffer) "󰄵 " (upcase org-agenda-name)
-			   (format-time-string "%A %d, %B %Y  ")))
+			   (format-time-string "%A %d, %B %Y")))
 			 (t (mono-modeline-format (current-buffer)))))))
 
 ;;;###autoload
