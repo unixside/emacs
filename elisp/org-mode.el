@@ -25,6 +25,8 @@
 
 ;; Olivetti and writer-mode
 (require 'olivetti)
+
+(add-to-list 'load-path "~/.emacs.d/elisp/writer/")
 (require 'writer-mode)
 
 ;; Functions

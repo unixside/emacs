@@ -18,6 +18,8 @@
 !/elisp/themes/rose-pine-moon-theme.el
 !/elisp/mono-modeline/
 !/elisp/mono-modeline/mono-modeline.el
+!/elisp/writer/
+!/elisp/writer/writer-mode.el
 !/elisp/chess/
 !/elisp/chess/chess.el
 !/elisp/chess/drawPosition.py
