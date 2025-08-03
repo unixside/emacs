@@ -19,7 +19,8 @@
 
     (custom-theme-set-faces
      'rose-pine-dawn
-     `(default                          ((t (:foreground ,text :background ,base))))
+     `(default                          ((t (:foreground ,text
+							 :background ,base))))
      `(cursor                           ((t (:background ,iris))))
      `(hl-line                          ((t (:inherit t :background ,hl-low))))
      `(fringe                           ((t (:background ,base))))
@@ -38,13 +39,18 @@
      `(show-paren-mismatch              ((t (:background ,hl-med))))
      
      ;; Line numbers
-     `(line-number                      ((t (:foreground ,muted :background ,hl-low))))
-     `(line-number-current-line         ((t (:foreground ,iris :background ,hl-low))))
+     `(line-number                      ((t (:foreground ,muted
+							 :background ,hl-low))))
+     `(line-number-current-line         ((t (:foreground ,iris
+							 :background ,hl-low))))
 
      ;; Windows dividers
-     `(window-divider                   ((t (:foreground ,base :background ,base))))
-     `(window-divider-first-pixel       ((t (:foreground ,base :background ,base))))
-     `(window-divider-last-pixel        ((t (:foreground ,base :background ,base))))
+     `(window-divider                   ((t (:foreground ,base
+							 :background ,base))))
+     `(window-divider-first-pixel       ((t (:foreground ,base
+							 :background ,base))))
+     `(window-divider-last-pixel        ((t (:foreground ,base
+							 :background ,base))))
 
      ;; Font locks
      `(font-lock-warning-face           ((t (:foreground ,love))))
@@ -138,39 +144,23 @@
      `(org-document-info-keyword ((t (:inherit (shadow fixed-pitch)))))
      `(org-indent                ((t (:inherit (org-hide fixed-pitch)))))
      `(org-link                  ((t (:foreground ,iris))))
-     `(org-meta-line             ((t (:inherit (font-lock-comment-face fixed-pitch)))))
+     `(org-meta-line             ((t (:inherit
+				      (font-lock-comment-face fixed-pitch)))))
      `(org-property-value        ((t (:inherit fixed-pitch))) t)
-     `(org-special-keyword       ((t (:inherit (font-lock-comment-face fixed-pitch)))))
+     `(org-special-keyword       ((t (:inherit
+				      (font-lock-comment-face fixed-pitch)))))
      `(org-table                 ((t (:inherit fixed-pitch :foreground ,subtle)))) 
-     `(org-verbatim              ((t (:inherit (shadow fixed-pitch) :foreground ,foam))))
+     `(org-verbatim              ((t (:inherit (shadow fixed-pitch)
+					       :foreground ,foam))))
      `(org-drawer                ((t (:inherit fixed-pitch :foreground ,muted))))
      `(org-hide                  ((t (:inherit fixed-pitch :foreground ,base))))
-     `(org-tag                   ((t (:foreground ,muted))))
-     `(org-todo                  ((t (:foreground ,love))))
-     `(org-done                  ((t (:foreground ,muted))))
+     `(org-tag                   ((t (:foreground ,muted
+						  :weight regular))))
+     `(org-todo                  ((t (:foreground ,love
+						  :weight regular))))
+     `(org-done                  ((t (:foreground ,muted
+						  :weight regular))))
      `(org-date                  ((t (:foreground ,muted))))
-
-     `(org-agenda-calendar-daterange ((t (:foreground ,text))))
-     `(org-agenda-calendar-event     ((t (:foreground ,text))))
-     `(org-agenda-calendar-sexp      ((t (:foreground ,text))))
-     `(org-agenda-clocking           ((t (:foreground ,text))))
-     `(org-agenda-column-dateline    ((t (:foreground ,text))))
-     `(org-agenda-current-time       ((t (:foreground ,text))))
-     `(org-agenda-date               ((t (:foreground ,foam)))) 
-     `(org-agenda-date-today         ((t (:foreground ,pine))))
-     `(org-agenda-date-weekend       ((t (:foreground ,pine))))
-     `(org-agenda-date-weekend-today ((t (:foreground ,text))))
-     `(org-agenda-diary              ((t (:foreground ,text))))
-     `(org-agenda-dimmed-todo-face   ((t (:foreground ,text))))
-     `(org-agenda-done               ((t (:foreground ,muted))))
-     `(org-agenda-filter-category    ((t (:foreground ,text))))
-     `(org-agenda-filter-effort      ((t (:foreground ,text))))
-     `(org-agenda-filter-regexp      ((t (:foreground ,text))))
-     `(org-agenda-filter-tags        ((t (:foreground ,text))))
-     `(org-agenda-restriction-lock   ((t (:foreground ,text))))
-     `(org-agenda-structure          ((t (:foreground ,text)))) 
-     `(org-agenda-structure-filter   ((t (:foreground ,love))))
-     `(org-agenda-structure-secondar ((t (:foreground ,text))))
      `(org-scheduled                 ((t (:foreground ,text))))
      `(org-scheduled-previously      ((t (:foreground ,iris))))
      `(org-scheduled-today           ((t (:foreground ,text))))
@@ -178,7 +168,44 @@
      `(org-upcoming-deadline         ((t (:foreground ,love))))
      `(org-upcoming-distant-deadline ((t (:foreground ,rose))))
      `(org-time-grid                 ((t (:foreground ,gold))))
-     `(org-priority                  ((t (:foreground ,pine))))))
+     `(org-priority                  ((t (:foreground ,pine))))
+
+     ;; Org Agenda faces
+     `(org-agenda-structure          ((t (:foreground ,text
+						      :slant italic
+						      :weight bold
+						      :height 1.5))))
+     `(org-agenda-date               ((t (:foreground ,subtle
+						      :slant italic
+						      :weight regular
+						      :height 1.2))))
+     `(org-agenda-date-weekend       ((t (:foreground ,pine
+						      :slant italic
+						      :weight regular
+						      :height 1.2))))
+     `(org-agenda-date-weekend-today ((t (:foreground ,love
+						      :slant italic
+						      :weight bold
+						      :height 1.2))))
+     `(org-agenda-current-time       ((t (:foreground ,text
+						      :weight regular))))
+     `(org-agenda-done               ((t (:foreground ,muted
+						      :weight regular))))
+     `(org-agenda-calendar-daterange ((t (:foreground ,text))))
+     `(org-agenda-calendar-event     ((t (:foreground ,text))))
+     `(org-agenda-calendar-sexp      ((t (:foreground ,text))))
+     `(org-agenda-clocking           ((t (:foreground ,text))))
+     `(org-agenda-column-dateline    ((t (:foreground ,text)))) 
+     `(org-agenda-date-today         ((t (:foreground ,pine))))
+     `(org-agenda-diary              ((t (:foreground ,text))))
+     `(org-agenda-dimmed-todo-face   ((t (:foreground ,text))))
+     `(org-agenda-filter-category    ((t (:foreground ,text))))
+     `(org-agenda-filter-effort      ((t (:foreground ,text))))
+     `(org-agenda-filter-regexp      ((t (:foreground ,text))))
+     `(org-agenda-filter-tags        ((t (:foreground ,text))))
+     `(org-agenda-restriction-lock   ((t (:foreground ,text))))
+     `(org-agenda-structure-filter   ((t (:foreground ,love))))
+     `(org-agenda-structure-secondar ((t (:foreground ,text))))))
 
 (provide-theme 'rose-pine-dawn)
 (provide 'rose-pine-dawn-theme)
