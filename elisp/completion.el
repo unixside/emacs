@@ -47,7 +47,7 @@
 (add-hook 'c-mode-hook 'lsp)
 (add-hook 'c++-mode-hook 'lsp)
 (add-hook 'rust-mode-hook 'lsp)
-(add-hook 'pyhton-mode-hook 'lsp)
+(add-hook 'python-mode-hook 'lsp)
 (add-hook 'lua-mode-hook 'lsp)
 (add-hook 'java-mode-hook 'lsp)
 (add-hook 'js-mode-hook 'lsp)
