@@ -196,7 +196,7 @@
 
 (defun mono-modeline-get-buffer-name (&optional buffer)
   (let* ((buffer (or buffer (current-buffer)))
-	 (limit-char (ceiling (* (window-total-width) 0.70)))
+	 (limit-char (ceiling (* (window-total-width) 0.65)))
 	 (file       (buffer-file-name buffer)))
     (format "%s " (if (and file (< (length file) limit-char))
 		      (abbreviate-file-name file)
@@ -213,8 +213,8 @@
 		     (get-buffer-window buffer)))
 	 (icon   (or icon (mono-modeline-get-icon buffer)))
 	 (name   (or name (mono-modeline-get-buffer-name buffer)))
-	 (right-text (or right-text (format-mode-line "%l:%c"))) 
-	 (reserve-area  (+ (* (length right-text) mono-modeline-name-height) 2))
+	 (right-text (or right-text (format-mode-line "%l:%c")))
+	 (reserve-area (+ (length right-text) 2))
 	 (icon-face (if active
 			(mono-modeline-get-icon-face buffer)
 		      'mono-modeline-icon-i-face))
@@ -229,7 +229,7 @@
      (propertize icon 'face icon-face)
      (propertize name 'face name-face 'display `(raise 0.15))
      (propertize " "  'face name-face
-		 'display `(space :align-to (- right ,reserve-area)))
+		 'display `(space :align-to ,(- (window-width) reserve-area)))
      (propertize right-text 'face right-face 'display `(raise 0.15)))))
 
 (defvar mono-modeline--selected-window nil
@@ -245,7 +245,9 @@
 		'(:eval
 		  (cond ((derived-mode-p 'org-agenda-mode)
 			  (mono-modeline-format
-			   (current-buffer) "󰄵 " (upcase org-agenda-name)
+			   (current-buffer)
+			   "󰄵 "
+			   (upcase org-agenda-name)
 			   (format-time-string "%A %d, %B %Y")))
 			 (t (mono-modeline-format (current-buffer)))))))
 
