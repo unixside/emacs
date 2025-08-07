@@ -1,12 +1,15 @@
-import os, sys, re, argparse
+import os
+import re
+import argparse
 from chess import Board, InvalidMoveError, IllegalMoveError, AmbiguousMoveError
 from PIL import Image, ImageDraw
-from prompt_toolkit import prompt
+from prompt_toolkit import PromptSession
+from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 
 board_png = "./board.png"
-pieces_png = {
+pieces = {
     "P" : "img/white-pawn.png",
     "N" : "img/white-knight.png",
     "B" : "img/white-bishop.png",
@@ -68,8 +71,8 @@ arguments = {
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 
-for key, path in pieces_png.items():
-    pieces_png[key] = os.path.join(script_dir, path)
+for key, path in pieces.items():
+    pieces[key] = os.path.join(script_dir, path)
 
 
 parser = argparse.ArgumentParser()
@@ -107,13 +110,16 @@ def isWhiteBox(row, col):
 def reverseStr(s):
     return s[::-1]
 
+def getPiece(c, s):
+    return Image.open(pieces.get(c), "r").convert("RGBA").copy().resize((s, s))
+
 def drawBoard(fen, swap_orientation, size, wcolor, bcolor, output):
     img = Image.new("RGBA", (size, size))
     row = 0
     col = 0
     x = 0
     y = 0
-    boxsize = size//8
+    s = size//8
 
     if swap_orientation:
         pfen = prossecedFen(reverseStr(fen))
@@ -121,15 +127,15 @@ def drawBoard(fen, swap_orientation, size, wcolor, bcolor, output):
         pfen = prossecedFen(fen)
 
     for c in pfen:
-        x = col * boxsize
-        y = row * boxsize
+        x = col * s
+        y = row * s
         color = wcolor if isWhiteBox(row, col) else bcolor
 
         img1 = ImageDraw.Draw(img)
-        img1.rectangle([x,y,x + boxsize, y + boxsize], fill=color)
+        img1.rectangle([x,y,x + s, y + s], fill=color)
 
-        if c in pieces_png.keys():
-            piece = Image.open(pieces_png.get(c), "r").convert("RGBA").copy().resize((boxsize, boxsize))
+        if c in pieces.keys():
+            piece = getPiece(c, s)
             img.paste(piece, (x,y), piece)
 
         if (col == 7):
@@ -140,9 +146,19 @@ def drawBoard(fen, swap_orientation, size, wcolor, bcolor, output):
 
     img.save(output, format="png")
 
+def drawMyBoard(board, args):
+    drawBoard(
+        board.board_fen(),
+        args.swap,
+        args.pixelsize,
+        args.white,
+        args.black,
+        args.output,
+    )
+
 def prossecedFen(fen):
     pfen = ""
-    fun = lambda c : "0" * int(c) if c.isnumeric() else c
+    def fun(c): return "0" * int(c) if c.isnumeric() else c
     
     for c in fen.replace("/", ""):
         pfen = pfen + fun(c)
@@ -166,49 +182,108 @@ def try_move(move, board):
         board.push_san(move)
     except IllegalMoveError as e:
         print(f"Error: {e} is a illegal move.")
-        error = IllegalMoveError
+        error = e
     except InvalidMoveError as e:
         print(f"Error: {e} is syntactically invalid move.")
-        error = IllegalMoveError
+        error = e
     except AmbiguousMoveError as e:
         print(f"Error {e} is a ambiguous move.")
-        error = IllegalMoveError
+        error = e
         
     return error
 
 def main():
-    args = parser.parse_args()    
+    args = parser.parse_args()
     board = Board()
     movements = args.movements if args.movements else []
-    errors = [IllegalMoveError, InvalidMoveError, AmbiguousMoveError]
-    err = None
-
-    
+    aux = []
+    err = False
 
     if movements != []:
         movements = re.findall("[A-Za-z0-8+\\-]{2,5}", movements)
         for move in movements:
             err = try_move(move, board)
+                
+            if err:
+                if not args.interactive:
+                    exit(1)
+                else:                
+                    movements = movements[0, movements.index(move)]
+                    err = False                
 
-            if err in errors and not args.interactive:           
-                exit(1)
+        drawMyBoard(board, args)
 
     if args.interactive:
-        while True:
-            user_input=prompt(
-                ">>> ",
-                history=FileHistory("./history"),
-                auto_suggest=AutoSuggestFromHistory())
+        bindings = KeyBindings()
+        session = PromptSession(
+            key_bindings=bindings,
+            history=FileHistory("./history"),
+            auto_suggest=AutoSuggestFromHistory(),
+        )
 
-            if 'q' in user_input.split():
-                break
+        @bindings.add('c-q')
+        def _(event):
+            args.interactive = False
+            event.app.exit()
 
+        @bindings.add('c-p')
+        def _(event):
+            if len(movements) > 0:
+                aux.append(movements.pop())
+                board.pop()
+                drawMyBoard(board, args)
 
-            try_move(user_input, board)
-            drawBoard(board.board_fen(), args.swap, args.pixelsize, args.white, args.black, args.output)
+            event.app.exit()
 
+        @bindings.add('c-n')
+        def _(event):
+            if len(aux) > 0:
+                move = aux.pop()
+                movements.append(move)
+                board.push_san(move)
+                drawMyBoard(board, args)
+
+            event.app.exit()
+
+        @bindings.add('c-e')
+        def _(event):
+            print(board.board_fen())
+            event.app.exit()
+
+        @bindings.add('c-g')
+        def _(event):
+            pgn = ""
+            for move in movements:
+                if isEven(movements.index(move)):
+                    pgn += f"{movements.index(move) // 2 + 1}. {move} "
+                else:
+                    pgn += f"{move} "
+            print(pgn)
+            event.app.exit()
+
+        @bindings.add('c-d')
+        def _(event):
+            board.pop()
+            drawMyBoard(board, args)
+            event.app.exit()
+
+        @bindings.add('c-r')
+        def _(event):
+            board.reset()
+            movements.clear()
+            args.swap = False
+            drawMyBoard(board, args)
+            event.app.exit()
+            
+        while args.interactive:            
+            input = session.prompt('>>> ')
+
+            if input:
+                err = try_move(input, board)
+                movements.append(input)
+                drawMyBoard(board, args)
+                
     exit(0)
-
     
 if __name__ == '__main__':
     main()
