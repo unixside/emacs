@@ -2,7 +2,7 @@ import os
 import re
 import argparse
 from chess import Board, InvalidMoveError, IllegalMoveError, AmbiguousMoveError
-from chess import svg, SquareSet, BB_EMPTY, WHITE, BLACK
+from chess import svg, SquareSet, BB_EMPTY, WHITE, BLACK, SAN_REGEX
 from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.history import FileHistory
@@ -12,12 +12,16 @@ script_dir = os.path.dirname(os.path.realpath(__file__))
 default_svg = os.path.join(script_dir, "board.svg")
 file = None
 aux = []
+es_pieces = "CATDR"
+en_pieces = "NBRQK"
+
+CASTLING_REGEX = re.compile(r"^(0-0)(-0)?([+#]{1})?\Z")
 
 colors = {
     "square light" : "#faf4ed",
     "square dark" : "#286983",
     "square light lastmove" : "#56949f",
-    "square dark lastmove" : "#f2e9e1",
+    "square dark lastmove" : "#56949f",
     "margin" : "#faf4ed",
     "coord" : "#286983",
     "inner border" : "#286983",
@@ -70,6 +74,13 @@ arguments = {
         "default": False,
         "action": 'store_true',
         "help": "Enter interactive movements"
+    },
+    "-c":
+    {
+        "alt": "--coordinates",
+        "default": False,
+        "action": "store_true",
+        "help": "Enables drawing of coordinates on the board edges."
     }
 }
 
@@ -93,77 +104,86 @@ for short, params in arguments.items():
             help=params["help"]
         )
 
-def isEven(n):
+def is_even(n):
     return n % 2 == 0
 
-def isOdd(n):
-    return not isEven(n)
+def is_odd(n):
+    return not is_even(n)
 
-def isMayus(char):
+def is_mayus(char):
     return char == char.upper()
 
-def drawBoard(board, args, file, fill={},
+def draw_board(board, args, file, fill={},
               arrows=[], squares=SquareSet(BB_EMPTY)):
     file.seek(0)
     file.truncate()
     file.write(svg.board(
         board,
         orientation= WHITE if not args.swap else BLACK,
-        lastmove=board.peek(),
+        lastmove=board.peek() if len(board.move_stack) > 0 else None,
         size=args.pixelsize,
         fill=fill,
         arrows=arrows,
         squares=squares,
-        coordinates=True,
+        coordinates=args.coordinates,
         colors=colors
 ))
 
-    
-def replaceMayusMove(move):
-    es_pieces = "CATDR"
-    en_pieces = "NBRQK"
+def san_match(text):
+    return SAN_REGEX.match(text) or CASTLING_REGEX.match(text)
 
+def replace_piece_char_of_move(move):
+    _aux = move
     if move[0] in es_pieces:
-        return move.replace(move[0], en_pieces[es_pieces.index(move[0])]) 
-    else:
-        return move
+        _aux = move.replace(move[0], en_pieces[es_pieces.index(move[0])])
+    
+    return _aux
 
-def try_move(move, board):
-    error = None
+def parse_movements(input):
+    substr = map(replace_piece_char_of_move, input.split(" "))
+    matchs = list(map(san_match, substr))
+    movements = [ s.group(0) for s in matchs if s is not None ]
+
+    return movements
+
+def try_move(san, board):
+    error = False
     try:
+        move = board.parse_san(san)
         board.push(move)
-    except IllegalMoveError as e:
-        print(f"Error: {e} is a illegal move.")
-        error = e
-    except InvalidMoveError as e:
-        print(f"Error: {e} is syntactically invalid move.")
-        error = e
-    except AmbiguousMoveError as e:
-        print(f"Error {e} is a ambiguous move.")
-        error = e
+    except IllegalMoveError:
+        print(f"Error: {san} is a illegal move.")
+        error = True
+    except InvalidMoveError:
+        print(f"Error: {san} is syntactically invalid move.")
+        error = True
+    except AmbiguousMoveError:
+        print(f"Error {san} is a ambiguous move.")
+        error = True
         
+    return error
+
+def load_movements(input, board, interactive):
+    error = False
+    index = 0
+    movements = parse_movements(input)
+    while not error and index < len(movements):
+        error = try_move(movements[index], board)
+        index += 1
+    else:
+        if not interactive:
+            exit(1)                
     return error
 
 def main():
     args = parser.parse_args()
     board = Board()
-    err = False
     file = open(args.output, "w")
 
     if args.movements:
-        aux = re.findall("[A-Za-z0-8+\\-]{2,5}", args.movements)
-        for move in aux:
-            replaceMayusMove(move)
-            err = try_move(board.parse_san(move), board)
-                
-            if err:
-                if not args.interactive:
-                    exit(1)
-                else:
-                    err = False
-                    break
+       load_movements(args.movements, board, args.interactive)
 
-        drawBoard(board, args, file)
+    draw_board(board, args, file)
 
     if args.interactive:
         bindings = KeyBindings()
@@ -181,17 +201,18 @@ def main():
         @bindings.add('c-p')
         def _(event):
             global aux
-            aux.append(board.pop())
-            drawBoard(board, args, file)
+            if len(board.move_stack) > 0:
+                aux.append(board.pop())
+                draw_board(board, args, file)
             event.app.exit()
 
         @bindings.add('c-n')
         def _(event):
             global aux
             if len(aux) > 0:
-                e = try_move(aux.pop(), board)
-                drawBoard(board, args, file)
-
+                board.push(aux.pop())
+                draw_board(board, args, file)
+                
             event.app.exit()
 
         @bindings.add('c-e')
@@ -201,41 +222,45 @@ def main():
 
         @bindings.add('c-g')
         def _(event):
-            pgn = ""
+            line=""
+            _aux = Board()
             for move in board.move_stack:
-                if isEven(board.move_stack.index(move)):
-                    pgn += f"{board.move_stack.index(move) // 2 + 1}. {move} "
-                else:
-                    pgn += f"{move} "
-            print(pgn)
+                index = board.move_stack.index(move)
+                if is_even(index):
+                    line += f"{index // 2 + 1}. {_aux.san_and_push(move)} "
+                else: 
+                    line += f"{_aux.san_and_push(move)} "
+
+            print(line)
             event.app.exit()
 
         @bindings.add('c-d')
         def _(event):
             if len(board.move_stack) > 0:
                 board.pop()
-                drawBoard(board, args, file)
+                aux.clear()                    
+                draw_board(board, args, file)
 
             event.app.exit()
 
         @bindings.add('c-r')
         def _(event):
             board.reset()
-            drawBoard(board, args, file)
+            aux.clear()
+            draw_board(board, args, file)
             event.app.exit()
 
         @bindings.add('c-f')
         def _(event):
             args.swap = not args.swap
-            drawBoard(board, args, file)
+            draw_board(board, args, file)
             event.app.exit()
             
         while args.interactive:
             input = session.prompt('>>> ')
-
             if input:
-                err = try_move(board.parse_san(replaceMayusMove(input)), board)
-                drawBoard(board, args, file)
+                load_movements(input, board, args.interactive)
+                draw_board(board, args, file)
 
     file.close()
     exit(0)
