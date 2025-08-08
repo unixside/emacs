@@ -42,7 +42,8 @@
       lsp-ui-sideline-enable nil
       lsp-eldoc-enable-hover nil
       lsp-ui-sideline-show-diagnostics nil
-      lsp-rust-server 'rust-analyzer)
+      lsp-rust-server 'rust-analyzer
+      lsp-enable-file-watchers nil)
 
 (add-hook 'c-mode-hook 'lsp)
 (add-hook 'c++-mode-hook 'lsp)
