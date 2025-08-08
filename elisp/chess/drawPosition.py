@@ -2,26 +2,30 @@ import os
 import re
 import argparse
 from chess import Board, InvalidMoveError, IllegalMoveError, AmbiguousMoveError
-from PIL import Image, ImageDraw
+from chess import svg, SquareSet, BB_EMPTY, WHITE, BLACK
 from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 
-board_png = "./board.png"
-pieces = {
-    "P" : "img/white-pawn.png",
-    "N" : "img/white-knight.png",
-    "B" : "img/white-bishop.png",
-    "R" : "img/white-rook.png",
-    "Q" : "img/white-queen.png",
-    "K" : "img/white-king.png",
-    "p" : "img/black-pawn.png",
-    "n" : "img/black-knight.png",
-    "b" : "img/black-bishop.png",
-    "r" : "img/black-rook.png",
-    "q" : "img/black-queen.png",
-    "k" : "img/black-king.png"
+script_dir = os.path.dirname(os.path.realpath(__file__))
+default_svg = os.path.join(script_dir, "board.svg")
+file = None
+aux = []
+
+colors = {
+    "square light" : "#faf4ed",
+    "square dark" : "#286983",
+    "square light lastmove" : "#56949f",
+    "square dark lastmove" : "#f2e9e1",
+    "margin" : "#faf4ed",
+    "coord" : "#286983",
+    "inner border" : "#286983",
+    "outer border" : "#faf4ed",
+    "arrow green" : "#56949f",
+    "arrow blue" : "#907aa9",
+    "arrow red" : "#b4637a",
+    "arrow yellow" : "#ea9d34",
 }
 
 arguments = {
@@ -45,7 +49,7 @@ arguments = {
     },
     "-o": {
         "alt": "--output",
-        "default": "./board.png",
+        "default": default_svg,
         "type": str,
         "help": "path of png image"
     },
@@ -68,12 +72,6 @@ arguments = {
         "help": "Enter interactive movements"
     }
 }
-
-script_dir = os.path.dirname(os.path.realpath(__file__))
-
-for key, path in pieces.items():
-    pieces[key] = os.path.join(script_dir, path)
-
 
 parser = argparse.ArgumentParser()
 for short, params in arguments.items():
@@ -104,68 +102,24 @@ def isOdd(n):
 def isMayus(char):
     return char == char.upper()
 
-def isWhiteBox(row, col):
-    return (isEven(row) and isEven(col)) or (isOdd(row) and isOdd(col))
+def drawBoard(board, args, file, fill={},
+              arrows=[], squares=SquareSet(BB_EMPTY)):
+    file.seek(0)
+    file.truncate()
+    file.write(svg.board(
+        board,
+        orientation= WHITE if not args.swap else BLACK,
+        lastmove=board.peek(),
+        size=args.pixelsize,
+        fill=fill,
+        arrows=arrows,
+        squares=squares,
+        coordinates=True,
+        colors=colors
+))
 
-def reverseStr(s):
-    return s[::-1]
-
-def getPiece(c, s):
-    return Image.open(pieces.get(c), "r").convert("RGBA").copy().resize((s, s))
-
-def drawBoard(fen, swap_orientation, size, wcolor, bcolor, output):
-    img = Image.new("RGBA", (size, size))
-    row = 0
-    col = 0
-    x = 0
-    y = 0
-    s = size//8
-
-    if swap_orientation:
-        pfen = prossecedFen(reverseStr(fen))
-    else:
-        pfen = prossecedFen(fen)
-
-    for c in pfen:
-        x = col * s
-        y = row * s
-        color = wcolor if isWhiteBox(row, col) else bcolor
-
-        img1 = ImageDraw.Draw(img)
-        img1.rectangle([x,y,x + s, y + s], fill=color)
-
-        if c in pieces.keys():
-            piece = getPiece(c, s)
-            img.paste(piece, (x,y), piece)
-
-        if (col == 7):
-            col = 0
-            row += 1
-        else:
-            col += 1
-
-    img.save(output, format="png")
-
-def drawMyBoard(board, args):
-    drawBoard(
-        board.board_fen(),
-        args.swap,
-        args.pixelsize,
-        args.white,
-        args.black,
-        args.output,
-    )
-
-def prossecedFen(fen):
-    pfen = ""
-    def fun(c): return "0" * int(c) if c.isnumeric() else c
     
-    for c in fen.replace("/", ""):
-        pfen = pfen + fun(c)
-        
-    return pfen
-
-def replaceMayusPieces(move):
+def replaceMayusMove(move):
     es_pieces = "CATDR"
     en_pieces = "NBRQK"
 
@@ -176,10 +130,8 @@ def replaceMayusPieces(move):
 
 def try_move(move, board):
     error = None
-    if isMayus(move[0]):
-        move = replaceMayusPieces(move)
     try:
-        board.push_san(move)
+        board.push(move)
     except IllegalMoveError as e:
         print(f"Error: {e} is a illegal move.")
         error = e
@@ -195,23 +147,23 @@ def try_move(move, board):
 def main():
     args = parser.parse_args()
     board = Board()
-    movements = args.movements if args.movements else []
-    aux = []
     err = False
+    file = open(args.output, "w")
 
-    if movements != []:
-        movements = re.findall("[A-Za-z0-8+\\-]{2,5}", movements)
-        for move in movements:
-            err = try_move(move, board)
+    if args.movements:
+        aux = re.findall("[A-Za-z0-8+\\-]{2,5}", args.movements)
+        for move in aux:
+            replaceMayusMove(move)
+            err = try_move(board.parse_san(move), board)
                 
             if err:
                 if not args.interactive:
                     exit(1)
-                else:                
-                    movements = movements[0, movements.index(move)]
-                    err = False                
+                else:
+                    err = False
+                    break
 
-        drawMyBoard(board, args)
+        drawBoard(board, args, file)
 
     if args.interactive:
         bindings = KeyBindings()
@@ -228,20 +180,17 @@ def main():
 
         @bindings.add('c-p')
         def _(event):
-            if len(movements) > 0:
-                aux.append(movements.pop())
-                board.pop()
-                drawMyBoard(board, args)
-
+            global aux
+            aux.append(board.pop())
+            drawBoard(board, args, file)
             event.app.exit()
 
         @bindings.add('c-n')
         def _(event):
+            global aux
             if len(aux) > 0:
-                move = aux.pop()
-                movements.append(move)
-                board.push_san(move)
-                drawMyBoard(board, args)
+                e = try_move(aux.pop(), board)
+                drawBoard(board, args, file)
 
             event.app.exit()
 
@@ -253,9 +202,9 @@ def main():
         @bindings.add('c-g')
         def _(event):
             pgn = ""
-            for move in movements:
-                if isEven(movements.index(move)):
-                    pgn += f"{movements.index(move) // 2 + 1}. {move} "
+            for move in board.move_stack:
+                if isEven(board.move_stack.index(move)):
+                    pgn += f"{board.move_stack.index(move) // 2 + 1}. {move} "
                 else:
                     pgn += f"{move} "
             print(pgn)
@@ -263,26 +212,32 @@ def main():
 
         @bindings.add('c-d')
         def _(event):
-            board.pop()
-            drawMyBoard(board, args)
+            if len(board.move_stack) > 0:
+                board.pop()
+                drawBoard(board, args, file)
+
             event.app.exit()
 
         @bindings.add('c-r')
         def _(event):
             board.reset()
-            movements.clear()
-            args.swap = False
-            drawMyBoard(board, args)
+            drawBoard(board, args, file)
+            event.app.exit()
+
+        @bindings.add('c-f')
+        def _(event):
+            args.swap = not args.swap
+            drawBoard(board, args, file)
             event.app.exit()
             
-        while args.interactive:            
+        while args.interactive:
             input = session.prompt('>>> ')
 
             if input:
-                err = try_move(input, board)
-                movements.append(input)
-                drawMyBoard(board, args)
-                
+                err = try_move(board.parse_san(replaceMayusMove(input)), board)
+                drawBoard(board, args, file)
+
+    file.close()
     exit(0)
     
 if __name__ == '__main__':
